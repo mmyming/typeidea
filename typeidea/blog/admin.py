@@ -7,7 +7,7 @@ from .models import Category, Post, Tag
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name','status','is_nav','created_time')
+    list_display = ('name','status','is_nav','created_time','post_count')
     fields = ('name','status','is_nav')
 
     def post_count(self,obj):
@@ -51,16 +51,19 @@ class PostAdmin(admin.ModelAdmin):
         'title','category','status',
         'created_time','operator'
     ]
-    list_display_links = []
+    list_display_links = ['category','status',]
 
-    list_filter = ['category',]
-    search_fields = ['title','category__name']
+    list_filter = ['category','owner']
+    search_fields = ['title','category__name','owner__username']
 
     actions_on_top = True
     actions_on_bottom = True
+    date_hierarchy = 'created_time'
+    list_editable = ('title',)
 
     #编辑页面
     save_on_top = True
+    show_full_result_count = True
 
     fields = (
         ('category','title'),
