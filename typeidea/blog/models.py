@@ -22,7 +22,38 @@ class Post(models.Model):
     created_time = models.DateTimeField(auto_now_add=True,verbose_name='创建时间')
     update_time = models.DateTimeField(auto_now=True,verbose_name='更新时间')
 
+    pv = models.PositiveIntegerField(default=1)
+    uv = models.PositiveIntegerField(default=1)
+    @staticmethod
+    def get_by_tag(tag_id):
+        try:
+            tag = Tag.objects.get(id=tag_id)
+        except Tag.DoesNotExist:
+            tag = None
+            post_list = []
+        else:
+            post_list = tag.post_set.filter(status=1).select_related('owner','category')
+        print('===============',post_list,tag)
+        return post_list, tag
+    @staticmethod
+    def get_by_category(category_id):
+        try:
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            category = None
+            post_list = []
+        else:
+            post_list = category.post_set.filter(status=1).select_related('owner', 'category')
 
+        return post_list, category
+
+    @classmethod
+    def latest_posts(cls):
+        queryset = cls.objects.filter(status=1)
+        return queryset
+    @classmethod
+    def hot_posts(cls):
+        return cls.objects.filter(status=1)
     class Meta:
         verbose_name = verbose_name_plural = '文章'
         ordering = ['-id']
@@ -38,6 +69,21 @@ class Category(models.Model):
 
     owner = models.ForeignKey(User,verbose_name='作者')
     created_time = models.DateTimeField(auto_now_add=True,verbose_name='创建时间')
+
+    @classmethod
+    def get_navs(cls):
+        categories =cls.objects.filter(status=1)
+        nav_categories = []
+        normal_categories = []
+        for c in categories:
+            if c.is_nav:
+                nav_categories.append(c)
+            else:
+                normal_categories.append(c)
+        return {
+            'navs': nav_categories,
+            'categories': normal_categories
+        }
 
     def __str__(self):
         return self.name
