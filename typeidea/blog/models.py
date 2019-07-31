@@ -1,7 +1,6 @@
-from __future__ import unicode_literals
-
 from django.contrib.auth.models import User
 from django.db import models
+import mistune
 
 # Create your models here.
 class Post(models.Model):
@@ -13,17 +12,22 @@ class Post(models.Model):
     title = models.CharField(max_length=50,verbose_name='标题')
     desc = models.CharField(max_length=255,blank=True,verbose_name='摘要')
     category = models.ForeignKey('Category',verbose_name='分类')
-    tag  = models.ManyToManyField('Tag',verbose_name='标签')
+    tag  = models.ManyToManyField('Tag',blank=True,verbose_name='标签')
 
     content = models.TextField(verbose_name='内容',help_text='注解：目前仅支持MarkDown格式数据')
     status = models.PositiveIntegerField(default=1,choices=STATUS_ITEMS,verbose_name='状态')
     owner = models.ForeignKey(User,verbose_name='作者')
+    content_html = models.TextField(verbose_name='正文html代码',blank=True,editable=False)
 
     created_time = models.DateTimeField(auto_now_add=True,verbose_name='创建时间')
     update_time = models.DateTimeField(auto_now=True,verbose_name='更新时间')
 
     pv = models.PositiveIntegerField(default=1)
     uv = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return self.title
+
     @staticmethod
     def get_by_tag(tag_id):
         try:
@@ -33,7 +37,7 @@ class Post(models.Model):
             post_list = []
         else:
             post_list = tag.post_set.filter(status=1).select_related('owner','category')
-        print('===============',post_list,tag)
+
         return post_list, tag
     @staticmethod
     def get_by_category(category_id):
@@ -50,10 +54,17 @@ class Post(models.Model):
     @classmethod
     def latest_posts(cls):
         queryset = cls.objects.filter(status=1)
+
         return queryset
+
     @classmethod
     def hot_posts(cls):
         return cls.objects.filter(status=1)
+
+    def save(self, *args,**kwargs):
+        self.content_html = mistune.markdown(self.content)
+        super().save(*args,**kwargs)
+
     class Meta:
         verbose_name = verbose_name_plural = '文章'
         ordering = ['-id']

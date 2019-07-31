@@ -31,11 +31,15 @@ class SideBar(models.Model):
         (1, '展示'),
         (2, '删除'),
     )
+    DISPLAY_HTML = 1
+    DISPLAY_LATEST = 2
+    DISPLAY_HOT = 3
+    DISPLAY_COMMENT = 4
     SIDE_TYPE = (
-        (1, 'HTML'),
-        (2, '最新文章'),
-        (3, '最热文章'),
-        (4, '最新评论'),
+        (DISPLAY_HTML, 'HTML'),
+        (DISPLAY_LATEST, '最新文章'),
+        (DISPLAY_HOT, '最热文章'),
+        (DISPLAY_COMMENT, '最新评论'),
     )
     title = models.CharField(max_length=50, verbose_name='标题')
     display_type = models.PositiveIntegerField(
@@ -50,7 +54,6 @@ class SideBar(models.Model):
 
     @classmethod
     def get_all(cls):
-        print(cls.objects.filter(status=1))
         return cls.objects.filter(status=1)
 
     @property
@@ -59,19 +62,19 @@ class SideBar(models.Model):
         from blog.models import Post
         from comment.models import Comment
         result = ''
-        if self.display_type == 1: #HTML
+        if self.display_type == self.DISPLAY_HTML: #HTML
             result = self.content
-        elif self.display_type == 2: #最新文章
+        elif self.display_type == self.DISPLAY_LATEST: #最新文章
             context = {
                 'posts':Post.latest_posts()
             }
             result = render_to_string('config/blocks/sidebar_posts.html',context)
-        elif self.display_type == 3: #最热文章
+        elif self.display_type == self.DISPLAY_HOT: #最热文章
             context = {
                 'posts': Post.hot_posts()
             }
             result = render_to_string('config/blocks/sidebar_posts.html', context)
-        elif self.display_type == 4: # 最新评论
+        elif self.display_type == self.DISPLAY_COMMENT: # 最新评论
             context = {
                 'comments':Comment.objects.filter(status=1)
             }
